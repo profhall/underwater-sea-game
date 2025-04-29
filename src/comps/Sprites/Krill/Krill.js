@@ -17,7 +17,7 @@ function KrillIndividual({ x, y, size, facingRight }) {
 
 // Krill swarm component
 function Krill({ image, width, height, size = 0.03, onEaten, initialPosition, fishInfo, sharkPosition }) {
-    console.log(`🦐 Krill swarm rendered at: (${initialPosition.x}, ${initialPosition.y})`); // Debug log
+    // console.log(`🦐 Krill swarm rendered at: (${initialPosition.x}, ${initialPosition.y})`); // Debug log
 
     const surfaceLevel = height * 0.1;
     const sandLevel = height * 0.9;

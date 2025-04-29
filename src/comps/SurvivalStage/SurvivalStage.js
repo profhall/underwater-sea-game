@@ -5,14 +5,14 @@ import Fish from '../Sprites/Fish/Fish';
 import Squid from '../Sprites/Squid/Squid';
 import Krill from '../Sprites/Krill/Krill';
 
-const MAX_TOTAL_CREATURES = 20; // Total creatures across all types
+const MAX_TOTAL_CREATURES = 100; // Total creatures across all types
 
 // Character selection component - now shown before game starts
 const CharacterSelect = ({ onSelect, currentCharacter, onStartGame }) => {
   const characters = [
     { id: 'shark', name: 'Shark', image: '/assets/shark.png', description: 'Default balance of creatures' },
     { id: 'orca', name: 'Orca', image: '/assets/orca.png', description: '50% fish, 50% squid' },
-    { id: 'sperm', name: 'Sperm Whale', image: '/assets/sperm_whale.png', description: '50% fish, 25% squid, 25% krill' }
+    { id: 'sperm', name: 'Sperm Whale', image: '/assets/sperm.png', description: '50% fish, 25% squid, 25% krill' }
   ];
 
   return (
