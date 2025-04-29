@@ -3,7 +3,7 @@ import { Sprite } from '@pixi/react';
 import { noise } from '@chriscourses/perlin-noise';
 
 function Fish({ image, width, height, size = 1, onEaten, initialPosition, fishInfo, sharkPosition }) {
-  console.log(`🐟 Fish rendered at: (${initialPosition.x}, ${initialPosition.y})`); // Debug log
+  // console.log(`🐟 Fish rendered at: (${initialPosition.x}, ${initialPosition.y})`); // Debug log
 
   const surfaceLevel = height * 0.1;
   const sandLevel = height * 0.9;
