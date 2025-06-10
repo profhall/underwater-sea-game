@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Sprite } from '@pixi/react';
 import { noise } from '@chriscourses/perlin-noise';
 
-function Fish({ image, width, height, size = 1, onEaten, initialPosition, fishInfo, sharkPosition }) {
+function Fish({ image, width, height, size = 1, onEaten = () => {}, initialPosition, sharkPosition }) {
   // console.log(`🐟 Fish rendered at: (${initialPosition.x}, ${initialPosition.y})`); // Debug log
 
   const surfaceLevel = height * 0.1;
@@ -75,20 +75,22 @@ function Fish({ image, width, height, size = 1, onEaten, initialPosition, fishIn
   }, [moveFish]);
 const [collided, setCollided] = useState(false);
 
- // Check for collision between the fish and the shark using updated positions
- useEffect(() => {
-   if (!collided && sharkPosition && position) {
-     const distance = Math.hypot(position.x - sharkPosition.x, position.y - sharkPosition.y);
-     if (distance < 50) {
-       console.log("🔥 Collision detected with fish info:", fishInfo);
-       setCollided(true); // Prevent multiple calls
-       onEaten();
-     }
-   }
- }, [position, sharkPosition, collided, fishInfo, onEaten]);
-  // Remove fish if it's eaten
-  if (!position) {
-    onEaten();
+// Collision detection - check if shark center overlaps with fish
+useEffect(() => {
+  if (!collided && sharkPosition && position) {
+    const distance = Math.hypot(position.x - sharkPosition.x, position.y - sharkPosition.y);
+    // Use smaller, more accurate collision radius based on actual sprite center
+    const collisionRadius = 40; // Fixed radius for more consistent collision
+    
+    if (distance < collisionRadius) {
+      console.log(`🔥 Fish eaten! Distance: ${distance.toFixed(2)}, Radius: ${collisionRadius}`);
+      setCollided(true);
+      onEaten();
+    }
+  }
+}, [position, sharkPosition, collided, onEaten]);
+  // Remove fish if it's eaten (collision detected)
+  if (collided) {
     return null;
   }
 

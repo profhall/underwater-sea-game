@@ -4,8 +4,9 @@ import MovingSprite from '../Sprites/MovingFish/MovingFish';
 import Fish from '../Sprites/Fish/Fish';
 import Squid from '../Sprites/Squid/Squid';
 import Krill from '../Sprites/Krill/Krill';
+import MenuButton from '../MenuButton/MenuButton';
 
-const MAX_TOTAL_CREATURES = 100; // Total creatures across all types
+const MAX_TOTAL_CREATURES =  50; // Total creatures across all types
 
 // Character selection component - now shown before game starts
 const CharacterSelect = ({ onSelect, currentCharacter, onStartGame }) => {
@@ -86,7 +87,7 @@ const CharacterSelect = ({ onSelect, currentCharacter, onStartGame }) => {
   );
 };
 
-const SurvivalStage = () => {
+const SurvivalStage = ({ onShowMenu }) => {
   const [dimensions, setDimensions] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -105,6 +106,8 @@ const SurvivalStage = () => {
   const [gameStarted, setGameStarted] = useState(false); // Game start state
   const [selectedCharacter, setSelectedCharacter] = useState('shark'); // Default character
   const [characterSelected, setCharacterSelected] = useState(false); // Flag to track if character selection is complete
+  const [health, setHealth] = useState(100); // Player health (0-100)
+  const [maxHealth] = useState(100); // Maximum health
 
   // Handle window resizing
   useEffect(() => {
@@ -218,55 +221,7 @@ const SurvivalStage = () => {
     }
   }, [gameStarted, dimensions.width, dimensions.height]);
 
-  // Collision detection
-  useEffect(() => {
-    if (!gameStarted) return;
-
-    const checkCollisions = () => {
-      // Check fish collisions
-      setFishList(prevList => {
-        return prevList.filter(fish => {
-          const distance = Math.hypot(fish.x - position.x, fish.y - position.y);
-          if (distance < 50) {
-            console.log(`🔥 Collision with fish!`);
-            setCreaturesEaten(prev => prev + 1);
-            return false; // Remove the fish
-          }
-          return true; // Keep the fish
-        });
-      });
-
-      // Check squid collisions
-      setSquidList(prevList => {
-        return prevList.filter(squid => {
-          const distance = Math.hypot(squid.x - position.x, squid.y - position.y);
-          if (distance < 50) {
-            console.log(`🔥 Collision with squid!`);
-            setCreaturesEaten(prev => prev + 1);
-            return false; // Remove the squid
-          }
-          return true; // Keep the squid
-        });
-      });
-
-      // Check krill collisions
-      setKrillList(prevList => {
-        return prevList.filter(krill => {
-          const distance = Math.hypot(krill.x - position.x, krill.y - position.y);
-          if (distance < 70) { // Larger collision radius for swarms
-            console.log(`🔥 Collision with krill swarm!`);
-            setCreaturesEaten(prev => prev + 1);
-            return false; // Remove the krill swarm
-          }
-          return true; // Keep the krill swarm
-        });
-      });
-    };
-
-    const collisionInterval = setInterval(checkCollisions, 16); // Check every 16ms
-
-    return () => clearInterval(collisionInterval);
-  }, [position, gameStarted]);
+  // Collision detection is now handled by individual sprite components
 
   // Function to start the game
   const startGame = () => {
@@ -279,8 +234,22 @@ const SurvivalStage = () => {
       y: dimensions.height / 2,
     });
 
-    // Reset scores
+    // Reset game state
     setCreaturesEaten(0);
+    setHealth(maxHealth); // Reset health to full
+  };
+
+  // Function to take damage (for future use with hostile fish)
+  // Usage: takeDamage(20) to remove 20 health points
+  const takeDamage = (damage) => {
+    setHealth(prevHealth => {
+      const newHealth = Math.max(0, prevHealth - damage);
+      if (newHealth <= 0) {
+        // Game over logic can be added here
+        console.log("Game Over! Health reached 0");
+      }
+      return newHealth;
+    });
   };
 
   // Function to reset the game
@@ -291,6 +260,7 @@ const SurvivalStage = () => {
     setSquidList([]);
     setKrillList([]);
     setCreaturesEaten(0);
+    setHealth(maxHealth); // Reset health to full
   };
 
   return (
@@ -312,6 +282,27 @@ const SurvivalStage = () => {
                 Score: {creaturesEaten}
               </div>
 
+              {/* Health bar */}
+              <div style={{ position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ color: 'white', fontSize: '16px', marginBottom: '5px' }}>Health</div>
+                <div style={{
+                  width: '200px',
+                  height: '20px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  border: '2px solid white',
+                  borderRadius: '10px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    width: `${(health / maxHealth) * 100}%`,
+                    height: '100%',
+                    backgroundColor: health > 60 ? '#4CAF50' : health > 30 ? '#FFC107' : '#f44336',
+                    transition: 'width 0.3s ease, background-color 0.3s ease'
+                  }}></div>
+                </div>
+                <div style={{ color: 'white', fontSize: '14px', marginTop: '3px' }}>{health}/{maxHealth}</div>
+              </div>
+
               {/* Creature counts display */}
               <div style={{ position: 'absolute', top: 60, right: 20, fontSize: '16px', color: 'white' }}>
                 <div>Fish: {fishList.length}</div>
@@ -319,24 +310,26 @@ const SurvivalStage = () => {
                 <div>Krill: {krillList.length}</div>
               </div>
 
-              {/* Reset button */}
-              <button
-                  onClick={resetGame}
-                  style={{
-                    position: 'absolute',
-                    top: 20,
-                    left: 20,
-                    padding: '8px 16px',
-                    fontSize: '14px',
-                    backgroundColor: '#f44336',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer'
-                  }}
-              >
-                Change Character
-              </button>
+              {/* Game control buttons */}
+              <div style={{ position: 'absolute', top: 20, left: 20, display: 'flex', gap: '10px' }}>
+                <button
+                    onClick={resetGame}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '14px',
+                      backgroundColor: '#f44336',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer'
+                    }}
+                >
+                  Change Character
+                </button>
+                {onShowMenu && (
+                  <MenuButton onClick={onShowMenu} style={{ position: 'static' }} />
+                )}
+              </div>
             </>
         )}
 
@@ -352,13 +345,12 @@ const SurvivalStage = () => {
           {fishList.map((fish) => (
               <Fish
                   key={fish.key}
-                  fishInfo={fish}
-                  sharkPosition={position}
                   image={`${process.env.PUBLIC_URL}/assets/fish.png`}
                   initialPosition={{ x: fish.x, y: fish.y }}
                   size={fish.size}
                   width={dimensions.width}
                   height={dimensions.height}
+                  sharkPosition={position}
                   onEaten={() => {
                     setFishList((prevList) => prevList.filter((f) => f.key !== fish.key));
                     setCreaturesEaten((prev) => prev + 1);
@@ -370,13 +362,12 @@ const SurvivalStage = () => {
           {squidList.map((squid) => (
               <Squid
                   key={squid.key}
-                  fishInfo={squid}
-                  sharkPosition={position}
                   image={`${process.env.PUBLIC_URL}/assets/sad_squid.png`}
                   initialPosition={{ x: squid.x, y: squid.y }}
                   size={squid.size}
                   width={dimensions.width}
                   height={dimensions.height}
+                  sharkPosition={position}
                   onEaten={() => {
                     setSquidList((prevList) => prevList.filter((s) => s.key !== squid.key));
                     setCreaturesEaten((prev) => prev + 1);
@@ -388,13 +379,12 @@ const SurvivalStage = () => {
           {krillList.map((krill) => (
               <Krill
                   key={krill.key}
-                  fishInfo={krill}
-                  sharkPosition={position}
                   image={`${process.env.PUBLIC_URL}/assets/krill.png`}
                   initialPosition={{ x: krill.x, y: krill.y }}
                   size={krill.size}
                   width={dimensions.width}
                   height={dimensions.height}
+                  sharkPosition={position}
                   onEaten={() => {
                     setKrillList((prevList) => prevList.filter((k) => k.key !== krill.key));
                     setCreaturesEaten((prev) => prev + 1);

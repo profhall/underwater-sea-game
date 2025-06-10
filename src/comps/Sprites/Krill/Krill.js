@@ -16,7 +16,7 @@ function KrillIndividual({ x, y, size, facingRight }) {
 }
 
 // Krill swarm component
-function Krill({ image, width, height, size = 0.03, onEaten, initialPosition, fishInfo, sharkPosition }) {
+function Krill({ image, width, height, size = 0.03, initialPosition, sharkPosition, onEaten = () => {} }) {
     // console.log(`🦐 Krill swarm rendered at: (${initialPosition.x}, ${initialPosition.y})`); // Debug log
 
     const surfaceLevel = height * 0.1;
@@ -59,18 +59,24 @@ function Krill({ image, width, height, size = 0.03, onEaten, initialPosition, fi
             y: prev.y + swarmCharacteristics.turnFrequency,
         }));
 
-        // Update individual krill positions
+        // Update individual krill positions with reduced frequency for performance
         setKrillPositions(prev => prev.map(krill => {
+            const newNoise = krill.individualNoise + 0.005; // Slower individual movement
             return {
                 ...krill,
-                individualNoise: krill.individualNoise + 0.01,
-                offsetX: krill.offsetX + (noise(krill.individualNoise) * 2 - 1) * 0.5,
-                offsetY: krill.offsetY + (noise(krill.individualNoise + 500) * 2 - 1) * 0.5,
+                individualNoise: newNoise,
+                offsetX: Math.max(-swarmCharacteristics.swarmSpread, Math.min(swarmCharacteristics.swarmSpread, 
+                    krill.offsetX + (noise(newNoise) * 2 - 1) * 0.3)),
+                offsetY: Math.max(-swarmCharacteristics.swarmSpread, Math.min(swarmCharacteristics.swarmSpread,
+                    krill.offsetY + (noise(newNoise + 500) * 2 - 1) * 0.3)),
             };
         }));
 
         setPosition((prevPos) => {
-            if (!prevPos) return null; // Stop rendering if krill is removed
+            // Ensure we always have a valid previous position
+            if (!prevPos || typeof prevPos.x !== 'number' || typeof prevPos.y !== 'number') {
+                return initialPosition; // Return to initial position if corrupted
+            }
 
             let noiseX = (noise(noiseOffset.x) * 2 - 1) * swarmCharacteristics.speedMultiplier;
             let noiseY = (noise(noiseOffset.y) * 2 - 1) * swarmCharacteristics.verticalTendency * swarmCharacteristics.speedMultiplier;
@@ -94,6 +100,11 @@ function Krill({ image, width, height, size = 0.03, onEaten, initialPosition, fi
             if (newY < surfaceLevel) newY = surfaceLevel;
             if (newY > sandLevel) newY = sandLevel;
 
+            // Validate final position
+            if (isNaN(newX) || isNaN(newY)) {
+                return prevPos; // Keep previous position if calculation failed
+            }
+
             setFacingRight(noiseX > 0);
 
             return { x: newX, y: newY };
@@ -112,20 +123,22 @@ function Krill({ image, width, height, size = 0.03, onEaten, initialPosition, fi
 
     const [collided, setCollided] = useState(false);
 
-    // Check for collision between the krill and the shark
+    // Collision detection - check if shark center overlaps with krill swarm
     useEffect(() => {
         if (!collided && sharkPosition && position) {
             const distance = Math.hypot(position.x - sharkPosition.x, position.y - sharkPosition.y);
-            if (distance < 70) { // Larger collision radius for swarm
-                console.log("🔥 Collision detected with krill swarm!");
-                setCollided(true); // Prevent multiple calls
+            const collisionRadius = 60; // Larger radius for swarm effect
+            
+            if (distance < collisionRadius) {
+                console.log(`🔥 Krill swarm eaten! Distance: ${distance.toFixed(2)}, Radius: ${collisionRadius}`);
+                setCollided(true);
                 onEaten();
             }
         }
     }, [position, sharkPosition, collided, onEaten]);
 
-    // Remove krill if it's eaten
-    if (!position) {
+    // Remove krill if it's eaten (collision detected)
+    if (collided) {
         return null;
     }
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Sprite } from '@pixi/react';
 import { noise } from '@chriscourses/perlin-noise';
 
-function Squid({ image, width, height, size = 1, onEaten, initialPosition, fishInfo, sharkPosition }) {
+function Squid({ image, width, height, size = 1, initialPosition, sharkPosition, onEaten = () => {} }) {
     // console.log(`🦑 Squid rendered at: (${initialPosition.x}, ${initialPosition.y})`); // Debug log
 
     const surfaceLevel = height * 0.1;
@@ -90,20 +90,22 @@ function Squid({ image, width, height, size = 1, onEaten, initialPosition, fishI
 
     const [collided, setCollided] = useState(false);
 
-    // Check for collision between the squid and the shark using updated positions
+    // Collision detection - check if shark center overlaps with squid
     useEffect(() => {
         if (!collided && sharkPosition && position) {
             const distance = Math.hypot(position.x - sharkPosition.x, position.y - sharkPosition.y);
-            if (distance < 50) {
-                console.log("🔥 Collision detected with squid!");
-                setCollided(true); // Prevent multiple calls
+            const collisionRadius = 45; // Slightly larger for squid
+            
+            if (distance < collisionRadius) {
+                console.log(`🔥 Squid eaten! Distance: ${distance.toFixed(2)}, Radius: ${collisionRadius}`);
+                setCollided(true);
                 onEaten();
             }
         }
     }, [position, sharkPosition, collided, onEaten]);
 
-    // Remove squid if it's eaten
-    if (!position) {
+    // Remove squid if it's eaten (collision detected)
+    if (collided) {
         return null;
     }
 

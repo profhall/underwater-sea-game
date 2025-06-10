@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Button, Paper, Typography } from '@mui/material';
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
 import UnderwaterScene from './comps/UnderwaterScene';
 import ErrorBoundary from './ErrorBoundary';
 import MovingSpriteStage from './comps/SurvivalStage/SurvivalStage'; // Import your new component
@@ -29,9 +29,25 @@ const menuOptions = {
 };
 
 function GameMenu({onStart}) {
+  const navigate = useNavigate();
 
-  const handleGameStart = () => {
-    onStart()
+  const handleMenuAction = (action) => {
+    if (action === "startAquariumMode") {
+      // Navigate to aquarium mode (home page with UnderwaterScene)
+      navigate("/");
+      onStart(); // Hide menu
+    } else if (action === "startSurvivalMode") {
+      // Navigate to survival mode
+      navigate("/survival-mode");
+      onStart(); // Hide menu
+    } else if (action === "startFreeRoam") {
+      // For now, same as aquarium mode - can be expanded later
+      navigate("/");
+      onStart(); // Hide menu
+    } else {
+      // For other options (How To Play, Settings), just start the game for now
+      onStart();
+    }
   }
   
   return (
@@ -57,11 +73,9 @@ function GameMenu({onStart}) {
         {Object.entries(menuOptions).map(([key, option]) => (
           <Button 
             key={key}
-            onClick={handleGameStart}
+            onClick={() => handleMenuAction(option.action)}
             variant="contained" 
             color="primary" 
-            component={Link} 
-            to={option.action === "startSurvivalMode" ? "/survival-mode" : "#"}
             sx={{ 
               minWidth: '200px',
               transition: 'all 0.3s',
@@ -79,30 +93,39 @@ function GameMenu({onStart}) {
   );
 }
 
-function App() {
-  const [isGameStarted, setIsGameStarted] = useState(false);
+// Main App content component that knows about route changes
+function AppContent() {
+  const [showMenu, setShowMenu] = useState(true);
 
   const startGame = () => {
-    setIsGameStarted(true);
+    setShowMenu(false);
   };
+
+  const showMainMenu = () => {
+    setShowMenu(true);
+  };
+
+  return (
+    <ErrorBoundary>
+      <Box position="relative" height="100vh">
+        <Routes>
+          <Route path="/" element={<UnderwaterScene onShowMenu={showMainMenu} />} />
+          <Route path="/survival-mode" element={<MovingSpriteStage onShowMenu={showMainMenu} />} />
+        </Routes>
+        
+        {/* Show menu overlay */}
+        {showMenu && (
+          <GameMenu onStart={startGame} />
+        )}
+      </Box>
+    </ErrorBoundary>
+  );
+}
+
+function App() {
   return (
     <Router>
-      <ErrorBoundary>
-        <Box position="relative" height="100vh">
-          <Routes>
-            <Route path="/" element={<UnderwaterScene />} />
-            <Route path="/survival-mode" element={<MovingSpriteStage />} />
-          </Routes>
-        </Box>
-    {/* <img src={`${process.env.PUBLIC_URL}/assets/underwaterBackground.jpg`} alt="Test Background" /> */}
-
-      {/* <UnderwaterScene /> */}
-      {!isGameStarted && (
-        <GameMenu onStart={startGame} />
-      )}
-
-
-      </ErrorBoundary>
+      <AppContent />
     </Router>
   );
 }
