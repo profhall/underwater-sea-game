@@ -1,39 +1,52 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Sprite } from '@pixi/react';
 
-function MovingSprite({ image, width, height, size = 1, position, setPosition, moving }) {
-  const speed = 50; // Movement speed in pixels
+function MovingSprite({ image, width, height, size = 1, position, setPosition, moving, speed = 5 }) {
+  // Default speed reduced from 8 to 5 for more controlled movement
+  // Speed can now be passed as a prop for easy adjustment
+  const lastTimeRef = useRef(0);
+  const animationFrameRef = useRef();
 
   useEffect(() => {
     const moveSprite = () => {
-      setPosition(prevPos => {
-        let newX = prevPos.x;
-        let newY = prevPos.y;
+      // Only move if a direction is being pressed
+      if (moving) {
+        setPosition(prevPos => {
+          let newX = prevPos.x;
+          let newY = prevPos.y;
 
-        if (moving === 'up') {
-          newY -= speed; // Move up
-        } else if (moving === 'down') {
-          newY += speed; // Move down
-        } else if (moving === 'right') {
-          newX += speed; // Move right
-        } else if (moving === 'left') {
-          newX -= speed; // Move left
-        }
+          // Apply movement based on direction
+          if (moving === 'up') {
+            newY -= speed;
+          } else if (moving === 'down') {
+            newY += speed;
+          } else if (moving === 'right') {
+            newX += speed;
+          } else if (moving === 'left') {
+            newX -= speed;
+          }
 
-        // Constrain the new position to avoid going outside the visible area
-        newY = Math.max(Math.min(newY, height - size * 50), size * 50);
-        newX = Math.max(Math.min(newX, width - size * 50), size * 50);
+          // Constrain the new position to avoid going outside the visible area
+          const spriteRadius = size * 25; // Half the sprite size for better boundaries
+          newY = Math.max(Math.min(newY, height - spriteRadius), spriteRadius);
+          newX = Math.max(Math.min(newX, width - spriteRadius), spriteRadius);
 
-        return { x: newX, y: newY };
-      });
+          return { x: newX, y: newY };
+        });
+      }
+
+      // Continue the animation loop regardless of movement state
+      animationFrameRef.current = requestAnimationFrame(moveSprite);
     };
 
-    // If a key is pressed, move the sprite continuously
-    if (moving) {
-      const intervalId = setInterval(moveSprite, 100); // Move every 100ms (adjust as needed)
+    // Start the animation loop
+    animationFrameRef.current = requestAnimationFrame(moveSprite);
 
-      return () => clearInterval(intervalId); // Clean up interval on component unmount or when `moving` changes
-    }
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
   }, [moving, height, width, size, speed, setPosition]);
 
   return (

@@ -94,15 +94,19 @@ function Squid({ image, width, height, size = 1, initialPosition, sharkPosition,
     useEffect(() => {
         if (!collided && sharkPosition && position) {
             const distance = Math.hypot(position.x - sharkPosition.x, position.y - sharkPosition.y);
-            const collisionRadius = 45; // Slightly larger for squid
-            
+
+            // Simplified and more reliable collision radius for squid
+            const baseCollisionRadius = 55; // Slightly larger for squid
+            const squidSizeBonus = Math.max(size * 25, 15); // Minimum 15px bonus for squid
+            const collisionRadius = baseCollisionRadius + squidSizeBonus;
+
             if (distance < collisionRadius) {
-                console.log(`🔥 Squid eaten! Distance: ${distance.toFixed(2)}, Radius: ${collisionRadius}`);
+                console.log(`🔥 Squid eaten! Distance: ${distance.toFixed(2)}, Radius: ${collisionRadius.toFixed(2)}, Squid size: ${size.toFixed(3)}`);
                 setCollided(true);
                 onEaten();
             }
         }
-    }, [position, sharkPosition, collided, onEaten]);
+    }, [position, sharkPosition, collided, onEaten, size]);
 
     // Remove squid if it's eaten (collision detected)
     if (collided) {

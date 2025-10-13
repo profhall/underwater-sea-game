@@ -28,21 +28,35 @@ const Bubbles = ({ width, height, count = 50 }) => {
   }, [count, createBubble]);
 
   useEffect(() => {
-    const animateBubbles = () => {
-      setBubbles(prevBubbles => 
-        prevBubbles.map(bubble => {
-          bubble.y -= bubble.speed;
-          if (bubble.y < -10) {
-            return createBubble();
-          }
-          return bubble;
-        })
-      );
+    let animationFrameId;
+    let lastTime = 0;
+
+    const animateBubbles = (currentTime) => {
+      // Target 60 FPS (16.67ms per frame)
+      if (currentTime - lastTime >= 16.67) {
+        setBubbles(prevBubbles =>
+          prevBubbles.map(bubble => {
+            const newBubble = { ...bubble };
+            newBubble.y -= newBubble.speed;
+            if (newBubble.y < -10) {
+              return createBubble();
+            }
+            return newBubble;
+          })
+        );
+        lastTime = currentTime;
+      }
+
+      animationFrameId = requestAnimationFrame(animateBubbles);
     };
 
-    const intervalId = setInterval(animateBubbles, 1000 / 60); // 60 FPS
+    animationFrameId = requestAnimationFrame(animateBubbles);
 
-    return () => clearInterval(intervalId);
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
   }, [createBubble]);
 
   return (

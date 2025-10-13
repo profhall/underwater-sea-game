@@ -2,21 +2,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Sprite } from '@pixi/react';
 import { noise } from '@chriscourses/perlin-noise';
 
-function Fish({ image, width, height, size = 1, onEaten = () => {}, initialPosition, sharkPosition }) {
-  // console.log(`🐟 Fish rendered at: (${initialPosition.x}, ${initialPosition.y})`); // Debug log
-
+function PoisonFish({ image, width, height, size = 1, onDamage = () => {}, initialPosition, sharkPosition }) {
   const surfaceLevel = height * 0.1;
   const sandLevel = height * 0.9;
 
-  // Fish movement properties
+  // Poison fish movement properties - more erratic than regular fish
   const [fishCharacteristics, setFishCharacteristics] = useState(() => ({
-    speedMultiplier: Math.random() * 1.5 + 0.5,
-    turnFrequency: Math.random() * 0.05 + 0.01,
-    verticalTendency: Math.random() * 0.8 + 0.002,
-    minHorizontalSpeed: Math.random() * 0.4 + 0.3,
+    speedMultiplier: Math.random() * 1.8 + 0.7, // Slightly faster and more erratic
+    turnFrequency: Math.random() * 0.08 + 0.02, // More frequent direction changes
+    verticalTendency: Math.random() * 1.0 + 0.003, // More vertical movement
+    minHorizontalSpeed: Math.random() * 0.5 + 0.4, // Faster minimum speed
   }));
 
-  // Fish position (uses initial position from SurvivalStage)
+  // Poison fish position (uses initial position from SurvivalStage)
   const [position, setPosition] = useState(initialPosition);
 
   const [noiseOffset, setNoiseOffset] = useState({
@@ -26,8 +24,8 @@ function Fish({ image, width, height, size = 1, onEaten = () => {}, initialPosit
 
   const [facingRight, setFacingRight] = useState(Math.random() < 0.5);
 
-  // Move fish function
-  const moveFish = useCallback(() => {
+  // Move poison fish function - more aggressive movement pattern
+  const movePoisonFish = useCallback(() => {
     setNoiseOffset((prev) => ({
       x: prev.x + fishCharacteristics.turnFrequency,
       y: prev.y + fishCharacteristics.turnFrequency,
@@ -39,13 +37,19 @@ function Fish({ image, width, height, size = 1, onEaten = () => {}, initialPosit
       let noiseX = (noise(noiseOffset.x) * 2 - 1) * fishCharacteristics.speedMultiplier;
       let noiseY = (noise(noiseOffset.y) * 2 - 1) * fishCharacteristics.verticalTendency * fishCharacteristics.speedMultiplier;
 
+      // Add occasional aggressive bursts (poison fish are more dangerous)
+      if (Math.random() < 0.02) {
+        noiseX *= 2.5;
+        noiseY *= 2.5;
+      }
+
       // Ensure minimum horizontal movement
       if (Math.abs(noiseX) < fishCharacteristics.minHorizontalSpeed) {
         noiseX = noiseX >= 0 ? fishCharacteristics.minHorizontalSpeed : -fishCharacteristics.minHorizontalSpeed;
       }
 
-      let newX = prevPos.x + noiseX * 3;
-      let newY = prevPos.y + noiseY * 1.5;
+      let newX = prevPos.x + noiseX * 3.5; // Slightly faster than regular fish
+      let newY = prevPos.y + noiseY * 2.0; // More vertical movement
 
       // Wrap fish when they leave the screen
       if (newX < -100) {
@@ -64,35 +68,37 @@ function Fish({ image, width, height, size = 1, onEaten = () => {}, initialPosit
     });
   }, [width, height, surfaceLevel, sandLevel, noiseOffset, fishCharacteristics]);
 
-  // Start fish movement
+  // Start poison fish movement
   useEffect(() => {
     const animationId = requestAnimationFrame(function animate() {
-      moveFish();
+      movePoisonFish();
       requestAnimationFrame(animate);
     });
 
     return () => cancelAnimationFrame(animationId);
-  }, [moveFish]);
-const [collided, setCollided] = useState(false);
+  }, [movePoisonFish]);
 
-// Collision detection - check if shark center overlaps with fish
-useEffect(() => {
-  if (!collided && sharkPosition && position) {
-    const distance = Math.hypot(position.x - sharkPosition.x, position.y - sharkPosition.y);
+  const [collided, setCollided] = useState(false);
 
-    // Simplified and more reliable collision radius
-    const baseCollisionRadius = 50; // Larger base radius for better detection
-    const fishSizeBonus = Math.max(size * 20, 10); // Minimum 10px bonus for tiny fish
-    const collisionRadius = baseCollisionRadius + fishSizeBonus;
+  // Collision detection - check if shark center overlaps with poison fish
+  useEffect(() => {
+    if (!collided && sharkPosition && position) {
+      const distance = Math.hypot(position.x - sharkPosition.x, position.y - sharkPosition.y);
 
-    if (distance < collisionRadius) {
-      console.log(`🔥 Fish eaten! Distance: ${distance.toFixed(2)}, Radius: ${collisionRadius.toFixed(2)}, Fish size: ${size.toFixed(3)}`);
-      setCollided(true);
-      onEaten();
+      // Collision radius for poison fish - slightly smaller to make them more challenging
+      const baseCollisionRadius = 45; // Smaller than regular fish for challenge
+      const fishSizeBonus = Math.max(size * 18, 8); // Smaller bonus
+      const collisionRadius = baseCollisionRadius + fishSizeBonus;
+
+      if (distance < collisionRadius) {
+        console.log(`☠️ Poison fish touched! Taking 25% damage. Distance: ${distance.toFixed(2)}, Radius: ${collisionRadius.toFixed(2)}`);
+        setCollided(true);
+        onDamage(25); // Deal 25% damage (25 out of 100 health)
+      }
     }
-  }
-}, [position, sharkPosition, collided, onEaten, size]);
-  // Remove fish if it's eaten (collision detected)
+  }, [position, sharkPosition, collided, onDamage, size]);
+
+  // Remove poison fish if it's been touched (collision detected)
   if (collided) {
     return null;
   }
@@ -108,4 +114,4 @@ useEffect(() => {
   );
 }
 
-export default Fish;
+export default PoisonFish;

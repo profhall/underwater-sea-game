@@ -127,15 +127,19 @@ function Krill({ image, width, height, size = 0.03, initialPosition, sharkPositi
     useEffect(() => {
         if (!collided && sharkPosition && position) {
             const distance = Math.hypot(position.x - sharkPosition.x, position.y - sharkPosition.y);
-            const collisionRadius = 60; // Larger radius for swarm effect
-            
+
+            // Simplified collision for krill swarms
+            const baseCollisionRadius = 60; // Larger radius for swarms
+            const swarmSizeBonus = swarmCharacteristics.swarmSize * 3; // Bonus based on swarm size
+            const collisionRadius = baseCollisionRadius + swarmSizeBonus;
+
             if (distance < collisionRadius) {
-                console.log(`🔥 Krill swarm eaten! Distance: ${distance.toFixed(2)}, Radius: ${collisionRadius}`);
+                console.log(`🔥 Krill swarm eaten! Distance: ${distance.toFixed(2)}, Radius: ${collisionRadius.toFixed(2)}, Swarm size: ${swarmCharacteristics.swarmSize}`);
                 setCollided(true);
                 onEaten();
             }
         }
-    }, [position, sharkPosition, collided, onEaten]);
+    }, [position, sharkPosition, collided, onEaten, swarmCharacteristics]);
 
     // Remove krill if it's eaten (collision detected)
     if (collided) {
