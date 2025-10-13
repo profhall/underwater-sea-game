@@ -278,6 +278,7 @@ const SurvivalStage = ({ onShowMenu }) => {
   });
 
   const [moving, setMoving] = useState(null); // Movement state
+  const [touchActive, setTouchActive] = useState(false); // Touch control state
   const [fishList, setFishList] = useState([]); // List of fish
   const [squidList, setSquidList] = useState([]); // List of squid
   const [krillList, setKrillList] = useState([]); // List of krill
@@ -337,6 +338,44 @@ const SurvivalStage = ({ onShowMenu }) => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [gameStarted]);
+
+  // Handle touch input for mobile/tablet devices
+  useEffect(() => {
+    if (!gameStarted) return;
+
+    const handleTouchStart = (e) => {
+      e.preventDefault();
+      setTouchActive(true);
+    };
+
+    const handleTouchMove = (e) => {
+      e.preventDefault();
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        // Update position directly to touch coordinates
+        setPosition({
+          x: touch.clientX,
+          y: touch.clientY
+        });
+      }
+    };
+
+    const handleTouchEnd = (e) => {
+      e.preventDefault();
+      setTouchActive(false);
+    };
+
+    // Add touch event listeners
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, [gameStarted]);
 
@@ -835,7 +874,8 @@ const SurvivalStage = ({ onShowMenu }) => {
                   )}
                 </div>
                 <div style={{ fontSize: '12px', color: '#ccc', maxWidth: '200px' }}>
-                  Controls: Arrow keys to move<br/>
+                  Controls:<br/>
+                  🖱️ Arrow keys or touch/drag<br/>
                   Speed: {PLAYER_MOVEMENT_SPEED}/10<br/>
                   Press 'G' to test game over
                 </div>
