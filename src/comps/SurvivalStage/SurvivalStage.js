@@ -730,15 +730,40 @@ const SurvivalStage = ({ onShowMenu }) => {
         {gameStarted && (
             <>
               {/* Score and stats display */}
-              <div style={{ position: 'absolute', top: 20, right: 20, fontSize: '18px', color: 'white', textAlign: 'right' }}>
-                <div style={{ fontSize: '24px', marginBottom: '8px' }}>Score: {creaturesEaten}</div>
+              <div style={{
+                position: 'absolute',
+                top: 20,
+                right: 20,
+                fontSize: '18px',
+                color: 'white',
+                textAlign: 'right',
+                background: 'rgba(0, 0, 0, 0.7)',
+                padding: '15px 20px',
+                borderRadius: '10px',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(5px)'
+              }}>
+                <div style={{ fontSize: '24px', marginBottom: '8px', fontWeight: 'bold' }}>Score: {creaturesEaten}</div>
                 <div style={{ fontSize: '16px', marginBottom: '4px' }}>Level: {difficultyLevel}</div>
-                <div style={{ fontSize: '14px', color: '#aaa' }}>Time: {Math.floor(gameTime / 60)}:{(gameTime % 60).toString().padStart(2, '0')}</div>
+                <div style={{ fontSize: '14px', color: '#ccc' }}>Time: {Math.floor(gameTime / 60)}:{(gameTime % 60).toString().padStart(2, '0')}</div>
               </div>
 
               {/* Health bar */}
-              <div style={{ position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ color: 'white', fontSize: '16px', marginBottom: '5px' }}>Health</div>
+              <div style={{
+                position: 'absolute',
+                top: 20,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                background: 'rgba(0, 0, 0, 0.7)',
+                padding: '15px 20px',
+                borderRadius: '10px',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(5px)'
+              }}>
+                <div style={{ color: 'white', fontSize: '16px', marginBottom: '8px', fontWeight: 'bold' }}>Health</div>
                 <div style={{
                   width: '200px',
                   height: '20px',
@@ -754,12 +779,24 @@ const SurvivalStage = ({ onShowMenu }) => {
                     transition: 'width 0.3s ease, background-color 0.3s ease'
                   }}></div>
                 </div>
-                <div style={{ color: 'white', fontSize: '14px', marginTop: '3px' }}>{health}/{maxHealth}</div>
+                <div style={{ color: 'white', fontSize: '14px', marginTop: '5px' }}>{health}/{maxHealth}</div>
               </div>
 
               {/* Creature counts display */}
-              <div style={{ position: 'absolute', top: 110, right: 20, fontSize: '14px', color: 'white', textAlign: 'right' }}>
-                <div style={{ marginBottom: '4px', fontWeight: 'bold' }}>Creatures ({fishList.length + squidList.length + krillList.length + poisonFishList.length + lifeFish1List.length + lifeFish2List.length + madFishList.length})</div>
+              <div style={{
+                position: 'absolute',
+                top: 150,
+                right: 20,
+                fontSize: '14px',
+                color: 'white',
+                textAlign: 'right',
+                background: 'rgba(0, 0, 0, 0.7)',
+                padding: '15px 20px',
+                borderRadius: '10px',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(5px)'
+              }}>
+                <div style={{ marginBottom: '8px', fontWeight: 'bold', fontSize: '15px' }}>Creatures ({fishList.length + squidList.length + krillList.length + poisonFishList.length + lifeFish1List.length + lifeFish2List.length + madFishList.length})</div>
                 <div style={{ color: '#87CEEB' }}>🐟 Fish: {fishList.length}</div>
                 <div style={{ color: '#DDA0DD' }}>🦑 Squid: {squidList.length}</div>
                 <div style={{ color: '#F0E68C' }}>🦐 Krill: {krillList.length}</div>
