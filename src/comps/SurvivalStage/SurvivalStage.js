@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sprite, Stage } from '@pixi/react';
 import MovingSprite from '../Sprites/MovingFish/MovingFish';
 import Fish from '../Sprites/Fish/Fish';
@@ -298,6 +298,9 @@ const SurvivalStage = ({ onShowMenu }) => {
   const [levelComplete, setLevelComplete] = useState(false); // Level completion state
   const [finalStats, setFinalStats] = useState(null); // Final game statistics
 
+  // Use ref to track previous difficulty level for spawning
+  const prevDifficultyRef = useRef(1);
+
   // Handle window resizing
   useEffect(() => {
     const handleResize = () => {
@@ -405,18 +408,8 @@ const SurvivalStage = ({ onShowMenu }) => {
       lifeFish2Count = Math.floor(Math.random() * 3); // 0-2 lifefish2 on hard
     }
 
-    // Calculate madfish count based on difficulty level (extremely rare but deadly)
-    if (difficultyLevel <= 1) {
-      madFishCount = Math.random() < 0.3 ? 1 : 0; // 30% chance for testing on level 1
-    } else if (difficultyLevel <= 2) {
-      madFishCount = Math.random() < 0.5 ? 1 : 0; // 50% chance on level 2
-    } else if (difficultyLevel <= 5) {
-      madFishCount = Math.floor(Math.random() * 2) + 1; // 1-2 madfish on medium
-    } else if (difficultyLevel <= 8) {
-      madFishCount = Math.floor(Math.random() * 3) + 1; // 1-3 madfish on hard
-    } else {
-      madFishCount = Math.floor(Math.random() * 4) + 2; // 2-5 madfish on nightmare difficulty
-    }
+    // Mad fish only spawn when difficulty increases (every 10 creatures), not at game start
+    madFishCount = 0;
 
     // Adjust total creatures to account for all special fish
     const remainingCreatures = totalCreatures - poisonFishCount - lifeFish1Count - lifeFish2Count - madFishCount;
@@ -552,10 +545,64 @@ const SurvivalStage = ({ onShowMenu }) => {
   };
 
 
-  // Simple difficulty level update (no respawning for now)
+  // Function to spawn additional mad fish when difficulty increases
+  const spawnMadFish = (difficulty) => {
+    let madFishCount;
+
+    // Determine how many mad fish to spawn based on difficulty
+    if (difficulty <= 2) {
+      madFishCount = 1; // 1 mad fish on early levels
+    } else if (difficulty <= 5) {
+      madFishCount = Math.floor(Math.random() * 2) + 1; // 1-2 mad fish on medium
+    } else if (difficulty <= 8) {
+      madFishCount = Math.floor(Math.random() * 3) + 1; // 1-3 mad fish on hard
+    } else {
+      madFishCount = Math.floor(Math.random() * 4) + 2; // 2-5 mad fish on nightmare
+    }
+
+    console.log(`💀 Spawning ${madFishCount} additional MadFish at difficulty level ${difficulty}`);
+
+    // Spawn the mad fish
+    const newMadFish = [];
+    for (let i = 0; i < madFishCount; i++) {
+      newMadFish.push({
+        key: `madfish-${Math.random()}-${Date.now()}`, // Unique key with timestamp
+        x: Math.random() * dimensions.width,
+        y: Math.random() * dimensions.height * 0.8 + dimensions.height * 0.1,
+        size: Math.random() * 0.15 + 0.12,
+        type: 'madfish',
+      });
+    }
+
+    console.log(`💀 Created mad fish array:`, newMadFish);
+
+    // Add new mad fish to existing list
+    setMadFishList(prev => {
+      console.log(`💀 Previous madFishList:`, prev);
+      const updated = [...prev, ...newMadFish];
+      console.log(`💀 Updated madFishList:`, updated);
+      return updated;
+    });
+  };
+
+  // Difficulty level update - spawns mad fish every 10 creatures
   useEffect(() => {
-    if (gameStarted) {
+    if (gameStarted && creaturesEaten > 0) {
       const newDifficultyLevel = Math.floor(creaturesEaten / 10) + 1;
+      const prevDifficulty = prevDifficultyRef.current;
+
+      console.log(`🎯 Difficulty check: creatures=${creaturesEaten}, prevLevel=${prevDifficulty}, newLevel=${newDifficultyLevel}`);
+
+      // If difficulty increased, spawn mad fish
+      if (newDifficultyLevel > prevDifficulty) {
+        console.log(`🚨 Difficulty increased from ${prevDifficulty} to ${newDifficultyLevel}! Spawning mad fish...`);
+        spawnMadFish(newDifficultyLevel);
+
+        // Update ref to new difficulty
+        prevDifficultyRef.current = newDifficultyLevel;
+      }
+
+      // Update state for display
       setDifficultyLevel(newDifficultyLevel);
     }
   }, [gameStarted, creaturesEaten]);
@@ -683,7 +730,11 @@ const SurvivalStage = ({ onShowMenu }) => {
     setLifeFish1List([]);
     setLifeFish2List([]);
     setMadFishList([]);
-    setDifficultyLevel(prev => prev + 1);
+    setDifficultyLevel(prev => {
+      const newLevel = prev + 1;
+      prevDifficultyRef.current = newLevel; // Update ref when advancing
+      return newLevel;
+    });
     setHealth(maxHealth); // Restore health for next level
     setCreaturesEaten(0); // Reset creatures eaten for new level
     // Spawn new creatures for next level will happen automatically due to useEffect
@@ -707,6 +758,7 @@ const SurvivalStage = ({ onShowMenu }) => {
     setGameOver(false);
     setLevelComplete(false);
     setFinalStats(null);
+    prevDifficultyRef.current = 1; // Reset difficulty ref
   };
 
   // Function to handle returning to main menu
@@ -728,6 +780,7 @@ const SurvivalStage = ({ onShowMenu }) => {
     setGameOver(false);
     setLevelComplete(false);
     setFinalStats(null);
+    prevDifficultyRef.current = 1; // Reset difficulty ref
 
     // Then navigate to main menu if callback exists
     if (onShowMenu) {
